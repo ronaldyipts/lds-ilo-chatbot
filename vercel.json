@@ -1,7 +1,11 @@
 {
   "version": 2,
   "functions": {
-    "api/generate_ilos.py": { "runtime": "python3.11" },
-    "api/proxy.py": { "runtime": "python3.11" }
+    "api/generate_ilos.py": {
+      "runtime": "vercel-python@3.11"
+    },
+    "api/proxy.py": {
+      "runtime": "vercel-python@3.11"
+    }
   }
 }
