@@ -156,7 +156,7 @@
         chatBox.innerHTML += `<div class="message bot-msg loading-dots" id="${loadingId}">AI 正在思考中...</div>`;
         chatBox.scrollTop = chatBox.scrollHeight;
 
-        fetch('/generate_ilos', {
+        fetch('/api/generate_ilos', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(formData)
@@ -207,7 +207,7 @@
         document.getElementById('user-input').disabled = true;
         document.getElementById('user-input').placeholder = "請從上方選擇...";
 
-        fetch('/proxy/' + apiKey)
+        fetch('/api/proxy/' + apiKey)
             .then(res => res.json())
             .then(data => {
                 const container = document.getElementById('options-container');
