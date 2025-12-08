@@ -1,6 +1,6 @@
 import json
-import os
 import requests
+import os
 
 SYSTEM_TOKEN = os.getenv("LDS_TOKEN")
 LARAVEL_HOST_API = "https://lds.cite.hku.hk/api"
@@ -13,16 +13,19 @@ SYSTEM_APIS = {
     "ILO_get_category":  f"{LARAVEL_HOST_API}/chatbot/options/intended-learning-outcomes/types"
 }
 
-system_headers = {
+HEADERS = {
     "Authorization": f"Bearer {SYSTEM_TOKEN}",
     "Content-Type": "application/json"
 }
 
 def handler(request):
-    key = request.query.get("api")
+    api_key = request.query.get("api")
+    if not api_key or api_key not in SYSTEM_APIS:
+        return {"error": "Unknown API"}, 400
 
-    if key not in SYSTEM_APIS:
-        return {"statusCode": 400, "body": json.dumps({"error": "Unknown API"})}
-
-    r = requests.post(SYSTEM_APIS[key], headers=system_headers, json={})
-    return {"statusCode": r.status_code, "body": r.text}
+    try:
+        url = SYSTEM_APIS[api_key]
+        r = requests.post(url, headers=HEADERS, json={})
+        return r.json(), r.status_code
+    except Exception as e:
+        return {"error": str(e)}, 500
