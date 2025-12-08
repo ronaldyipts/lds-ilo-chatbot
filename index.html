@@ -207,7 +207,7 @@
         document.getElementById('user-input').disabled = true;
         document.getElementById('user-input').placeholder = "請從上方選擇...";
 
-        fetch('/api/proxy/' + apiKey)
+        fetch('/api/proxy?api=' + apiKey)
             .then(res => res.json())
             .then(data => {
                 const container = document.getElementById('options-container');
