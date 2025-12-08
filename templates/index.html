@@ -27,12 +27,14 @@
         .option-btn { background: white; border: 1px solid #ccc; padding: 8px 15px; border-radius: 15px; cursor: pointer; font-size: 13px; transition: all 0.2s; }
         .option-btn:hover { background: #3498db; color: white; border-color: #3498db; }
 
+        /* 結果卡片樣式 */
         .ilo-card { border: 1px solid #eee; background: white; padding: 12px; margin-top: 8px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .tag { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-right: 5px; font-weight: bold; text-transform: uppercase; }
         .tag-cat { background: #e8f8f5; color: #1abc9c; }
         .tag-bloom { background: #fef9e7; color: #f1c40f; }
         .loading-dots { font-style: italic; color: #888; }
 
+        /* 動作按鈕 (重新開始 / 再造一個) */
         .action-btn-group { display: flex; gap: 10px; margin-top: 10px; }
         .action-btn { flex: 1; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; font-size: 14px; }
         .btn-retry { background-color: #27ae60; } /* 綠色 */
@@ -135,18 +137,24 @@
         }
     }
 
+    // --- [新增] 回到 Step 5 的功能 ---
     function retryStep5() {
+        // 1. 清空舊的選擇
         formData.bt_level = "";
         formData.verb = "";
         updateStatus();
 
+        // 2. 重設步驟
         currentStep = 5;
 
+        // 3. 恢復輸入區 (雖然是用按鈕，但保持一致性)
         document.getElementById('input-area').style.display = 'flex';
         
+        // 4. 顯示引導訊息
         appendBotMessage("沒問題！讓我們針對同一個課題 (<strong>" + formData.topic + "</strong>) 重新設定目標。");
         appendBotMessage("Step 5: 請再次選擇 **Bloom's Level** (認知層次)。");
         
+        // 5. 重新載入選項
         fetchAndShowOptions('ILO_get_bt_levels', 'bt_level');
     }
 
@@ -156,7 +164,7 @@
         chatBox.innerHTML += `<div class="message bot-msg loading-dots" id="${loadingId}">AI 正在思考中...</div>`;
         chatBox.scrollTop = chatBox.scrollHeight;
 
-        fetch('/api/generate_ilos', {
+        fetch('/generate_ilos', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(formData)
@@ -180,7 +188,7 @@
                         <span class="tag tag-cat">${item.category}</span>
                         <span class="tag tag-bloom">${item.bt_level}</span>
                         <br>
-                        <b>${item.verb}</b> ${safeStatement}
+                        Students will be able to <b>${item.verb}</b> ${safeStatement}
                     </div>`;
                 });
             } else {
@@ -188,6 +196,7 @@
             }
             appendBotMessage(html);
             
+            // [修改] 顯示兩個按鈕：再造一個 或 全部重來
             const actionBtns = `
                 <div class="action-btn-group">
                     <button class="action-btn btn-retry" onclick="retryStep5()">🔄 再造一個 (同一課題)</button>
@@ -205,9 +214,9 @@
 
     function fetchAndShowOptions(apiKey, fieldName) {
         document.getElementById('user-input').disabled = true;
-        document.getElementById('user-input').placeholder = "請從上方選擇...";
+        document.getElementById('user-input').placeholder = "請從下方選擇...";
 
-        fetch('/api/proxy?api=' + apiKey)
+        fetch('/proxy/' + apiKey)
             .then(res => res.json())
             .then(data => {
                 const container = document.getElementById('options-container');
@@ -215,6 +224,7 @@
                 grid.innerHTML = '';
                 
                 if (Array.isArray(data)) {
+                    // 如果動詞太多，限制顯示數量
                     const limit = (fieldName === 'verb') ? 40 : data.length;
                     data.slice(0, limit).forEach(item => {
                         const btn = document.createElement('button');
