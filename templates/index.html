@@ -1,278 +1,672 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LDS ILO Chatbot</title>
+    <title>Course Form with Chatbot Controller</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; height: 100vh; margin: 0; }
-        .chat-container { width: 100%; max-width: 800px; background: white; display: flex; flex-direction: column; box-shadow: 0 4px 15px rgba(0,0,0,0.1); height: 95vh; margin-top: 20px; border-radius: 10px; overflow: hidden; }
-        .chat-header { background-color: #2c3e50; color: white; padding: 15px; text-align: center; font-weight: bold; font-size: 1.2em; }
+        :root {
+            --primary-color: #3f51b5;
+            --border-color: #999;
+            --focus-color: #3f51b5;
+            --text-color: #333;
+            --label-color: #3f51b5;
+            --chatbot-color: #4caf50;
+            --user-msg-bg: #e3f2fd;
+            --bot-msg-bg: #f1f1f1;
+            
+            /* Bloom's Colors */
+            --bloom-remember: #673ab7;
+            --bloom-understand: #2196f3;
+            --bloom-apply: #4caf50;
+            --bloom-analyze: #fbc02d;
+            --bloom-evaluate: #ff9800;
+            --bloom-create: #f44336;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        /* --- Main Form Styles --- */
+        .form-container {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            width: 100%;
+            max-width: 850px;
+            margin-bottom: 80px;
+        }
+
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; }
+        .header h2 { color: var(--primary-color); margin: 0; font-size: 1.5rem; }
         
-        .status-bar { background: #ecf0f1; padding: 10px 15px; font-size: 0.85em; color: #555; border-bottom: 1px solid #ddd; line-height: 1.4; display: flex; flex-wrap: wrap; gap: 10px; }
-        .status-item strong { color: #2980b9; }
+        /* Floating Action Button for Chat */
+        .fab-chat {
+            position: fixed; bottom: 30px; right: 30px;
+            width: 60px; height: 60px;
+            background-color: var(--chatbot-color); color: white;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            cursor: pointer; z-index: 1000;
+            transition: transform 0.3s, background 0.3s;
+        }
+        .fab-chat:hover { transform: scale(1.1); background-color: #43a047; }
+        .fab-chat.hidden { display: none; }
 
-        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
-        .message { padding: 10px 15px; border-radius: 10px; max-width: 80%; line-height: 1.5; font-size: 15px; word-wrap: break-word; }
-        .bot-msg { background-color: #e8f6f3; align-self: flex-start; border-left: 4px solid #1abc9c; color: #333; }
-        .user-msg { background-color: #d5f5e3; align-self: flex-end; color: #333; text-align: right; }
+        .form-group { margin-bottom: 25px; }
+        .form-row { display: flex; gap: 20px; flex-wrap: wrap; }
+        .col-half { flex: 1; min-width: 250px; }
+
+        label { display: block; color: var(--label-color); font-size: 0.95rem; margin-bottom: 8px; font-weight: 600; }
+        .required { color: red; }
         
-        .input-area { padding: 15px; border-top: 1px solid #eee; display: flex; gap: 10px; background: #fff; }
-        input[type="text"] { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 20px; outline: none; font-size: 15px; }
-        button.send-btn { background-color: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; }
-        button.send-btn:hover { background-color: #2980b9; }
+        input[type="text"], textarea, select {
+            width: 100%; border: 1px solid #ddd; border-radius: 6px;
+            padding: 12px; font-size: 1rem; color: var(--text-color);
+            background-color: #fff; outline: none; transition: border-color 0.3s; box-sizing: border-box;
+        }
+        input:focus, textarea:focus, select:focus { border-color: var(--focus-color); box-shadow: 0 0 0 3px rgba(63, 81, 181, 0.1); }
 
-        .options-container { padding: 10px 20px; background: #f9f9f9; border-top: 1px solid #eee; max-height: 200px; overflow-y: auto; display: none; }
-        .options-grid { display: flex; flex-wrap: wrap; gap: 8px; }
-        .option-btn { background: white; border: 1px solid #ccc; padding: 8px 15px; border-radius: 15px; cursor: pointer; font-size: 13px; transition: all 0.2s; }
-        .option-btn:hover { background: #3498db; color: white; border-color: #3498db; }
+        /* Checkbox Grid */
+        .checkbox-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* Increased min-width for longer labels */
+            gap: 10px; padding: 15px; background-color: #f8f9fa;
+            border: 1px solid #eee; border-radius: 8px;
+        }
+        .checkbox-item { display: flex; align-items: flex-start; gap: 10px; font-size: 0.9rem; cursor: pointer; }
+        .checkbox-item input { width: auto; cursor: pointer; margin-top: 4px; }
+        .checkbox-item label { margin-bottom: 0; font-weight: normal; color: #333; line-height: 1.4; cursor: pointer; }
 
-        /* 結果卡片樣式 */
-        .ilo-card { border: 1px solid #eee; background: white; padding: 12px; margin-top: 8px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .tag { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-right: 5px; font-weight: bold; text-transform: uppercase; }
-        .tag-cat { background: #e8f8f5; color: #1abc9c; }
-        .tag-bloom { background: #fef9e7; color: #f1c40f; }
-        .loading-dots { font-style: italic; color: #888; }
+        /* Bloom's Section Visuals */
+        .bloom-section { background-color: #fafafa; padding: 20px; border-radius: 8px; border: 1px dashed #ccc; }
+        
+        select[data-level="Remember"] { border-left: 5px solid var(--bloom-remember); }
+        select[data-level="Understand"] { border-left: 5px solid var(--bloom-understand); }
+        select[data-level="Apply"] { border-left: 5px solid var(--bloom-apply); }
+        select[data-level="Analyze"] { border-left: 5px solid var(--bloom-analyze); }
+        select[data-level="Evaluate"] { border-left: 5px solid var(--bloom-evaluate); }
+        select[data-level="Create"] { border-left: 5px solid var(--bloom-create); }
 
-        /* 動作按鈕 (重新開始 / 再造一個) */
-        .action-btn-group { display: flex; gap: 10px; margin-top: 10px; }
-        .action-btn { flex: 1; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; font-size: 14px; }
-        .btn-retry { background-color: #27ae60; } /* 綠色 */
-        .btn-restart { background-color: #7f8c8d; } /* 灰色 */
-        .btn-retry:hover { background-color: #2ecc71; }
+        /* --- Chatbot Window Styles --- */
+        .chat-window {
+            position: fixed; bottom: 100px; right: 30px;
+            width: 380px; height: 600px;
+            background: white; border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            display: flex; flex-direction: column;
+            z-index: 1001;
+            transform: translateY(20px); opacity: 0; pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+            overflow: hidden;
+        }
+        .chat-window.active { transform: translateY(0); opacity: 1; pointer-events: all; bottom: 30px; }
+
+        .chat-header {
+            background: var(--chatbot-color); color: white; padding: 15px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            font-weight: 600; font-size: 1.1rem;
+            flex-shrink: 0; /* Prevent header shrinking */
+        }
+        .chat-close { cursor: pointer; font-size: 1.2rem; opacity: 0.8; transition: opacity 0.2s; }
+        .chat-close:hover { opacity: 1; }
+
+        /* --- Sticky Welcome Section --- */
+        .chat-sticky-section {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-bottom: 1px solid #ddd;
+            flex-shrink: 0;
+            font-size: 0.9rem;
+            color: #444;
+            z-index: 10;
+        }
+
+        .chat-body {
+            flex: 1; padding: 20px; background: #fff;
+            overflow-y: auto;
+            display: flex; flex-direction: column; gap: 15px;
+        }
+
+        /* Chat Messages */
+        .chat-msg { padding: 10px 15px; border-radius: 12px; max-width: 85%; font-size: 0.95rem; line-height: 1.5; position: relative; word-wrap: break-word; }
+        .chat-msg.bot { background: var(--bot-msg-bg); color: #333; align-self: flex-start; border-bottom-left-radius: 2px; }
+        .chat-msg.user { background: var(--user-msg-bg); color: #0d47a1; align-self: flex-end; border-bottom-right-radius: 2px; }
+        
+        /* Quick Actions Menu inside Sticky Header */
+        .chat-actions-menu {
+            display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;
+        }
+        .action-chip {
+            background: white; border: 1px solid var(--chatbot-color); color: var(--chatbot-color);
+            padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; cursor: pointer;
+            transition: all 0.2s; display: flex; align-items: center; gap: 5px;
+        }
+        .action-chip:hover { background: var(--chatbot-color); color: white; }
+        .action-chip i { font-size: 0.8rem; }
+
+        /* --- Interactive Elements inside Bot Messages --- */
+        
+        /* General Card */
+        .bot-suggestion-card {
+            background: white; border: 1px solid #ddd; border-radius: 8px; padding: 10px; margin-top: 5px;
+        }
+        
+        /* Specific Style for Individual ILO Items */
+        .ilo-result-item {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+        }
+        .ilo-text {
+            margin: 0 0 8px 0;
+            font-size: 0.9rem;
+            color: #444;
+        }
+
+        /* The Button */
+        .apply-btn {
+            background: var(--primary-color); color: white; border: none; padding: 6px 12px;
+            border-radius: 4px; font-size: 0.8rem; cursor: pointer; width: 100%;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            transition: background 0.2s;
+        }
+        .apply-btn:hover { background: #303f9f; }
+        .apply-btn:disabled { background: #ccc; cursor: default; }
+        .apply-btn.small { padding: 4px 8px; font-size: 0.75rem; }
+
+        .chat-footer {
+            padding: 15px; background: white; border-top: 1px solid #eee;
+            display: flex; gap: 10px;
+            flex-shrink: 0;
+        }
+        #chatInput { 
+            flex: 1; 
+            padding: 10px; 
+            border: 1px solid #ddd; 
+            border-radius: 20px; 
+            outline: none; 
+            font-family: Arial, sans-serif; /* Updated Font */
+        }
+        #chatSend {
+            background: var(--chatbot-color); color: white; border: none;
+            width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* Loading Dots */
+        .typing-indicator { display: inline-flex; gap: 4px; padding: 5px 10px; background: #e0e0e0; border-radius: 10px; align-self: flex-start; display: none; }
+        .dot { width: 6px; height: 6px; background: #888; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
     </style>
 </head>
 <body>
 
-<div class="chat-container">
-    <div class="chat-header">課程教案助手 (Chatbot)</div>
+<!-- Main Form -->
+<div class="form-container">
+    <div class="header">
+        <h2>Course Design Form</h2>
+    </div>
+
+    <form id="courseForm">
+        <div class="form-group">
+            <label for="topic">Topic <span class="required">*</span></label>
+            <input type="text" id="topic" required placeholder="e.g. Introduction to Generative AI">
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" rows="3" placeholder="Briefly describe the course content..."></textarea>
+        </div>
+
+        <!-- KLA SECTION -->
+        <div class="form-group">
+            <label>Key Learning Areas</label>
+            <div class="checkbox-grid">
+                <div class="checkbox-item">
+                    <input type="checkbox" name="kla" value="Chinese Language Education" id="kla_chinese">
+                    <label for="kla_chinese">Chinese Language Education</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" name="kla" value="English Language Education" id="kla_english">
+                    <label for="kla_english">English Language Education</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" name="kla" value="Mathematics Education" id="kla_math">
+                    <label for="kla_math">Mathematics Education</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" name="kla" value="Science Education" id="kla_science">
+                    <label for="kla_science">Science Education</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" name="kla" value="Technology Education" id="kla_tech">
+                    <label for="kla_tech">Technology Education</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" name="kla" value="Personal, Social and Humanities Education" id="kla_pshe">
+                    <label for="kla_pshe">Personal, Social and Humanities Education</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" name="kla" value="Arts Education" id="kla_arts">
+                    <label for="kla_arts">Arts Education</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" name="kla" value="Physical Education" id="kla_pe">
+                    <label for="kla_pe">Physical Education</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- UPDATED GRADE LEVEL SECTION -->
+        <div class="form-group">
+            <label for="grade-level">Grade Level</label>
+            <select id="grade-level">
+                <option value="" disabled selected>Select Grade...</option>
+                <option value="Kindergarten">Kindergarten</option>
+                <option value="P1">P1</option>
+                <option value="P2">P2</option>
+                <option value="P3">P3</option>
+                <option value="P4">P4</option>
+                <option value="P5">P5</option>
+                <option value="P6">P6</option>
+                <option value="S1">S1</option>
+                <option value="S2">S2</option>
+                <option value="S3">S3</option>
+                <option value="S4">S4</option>
+                <option value="S5">S5</option>
+                <option value="S6">S6</option>
+                <option value="Higher Education">Higher Education</option>
+                <option value="Adult Education">Adult Education</option>
+                <option value="Others">Others</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="disciplinary-practice">Disciplinary Practice (DP)</label>
+            <select id="disciplinary-practice">
+                <option value="" disabled selected>Select a Practice (or ask AI)...</option>
+                <option value="Engineering Design">Engineering Design</option>
+                <option value="Scientific Investigation">Scientific Investigation</option>
+                <option value="Mock Legislative Procedure">Mock Legislative Procedure</option>
+                <option value="Performance Production">Performance Production</option>
+                <option value="Writing a News Report">Writing a News Report</option>
+                <option value="General Inquiry">General Inquiry</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="pedagogical-approach">Pedagogical Approach (PA)</label>
+            <select id="pedagogical-approach">
+                <option value="" disabled selected>Select an Approach (or ask AI)...</option>
+                <option value="Self-Directed Learning">Self-Directed Learning</option>
+            </select>
+        </div>
+
+        <div class="bloom-section">
+            <label style="margin-bottom:15px; display:block;">Bloom's Taxonomy</label>
+            <div class="form-group">
+                <label for="bloom-level">Cognitive Level</label>
+                <select id="bloom-level">
+                    <option value="" disabled selected>Select Level...</option>
+                    <option value="Remember">Remember</option>
+                    <option value="Understand">Understand</option>
+                    <option value="Apply">Apply</option>
+                    <option value="Analyze">Analyze</option>
+                    <option value="Evaluate">Evaluate</option>
+                    <option value="Create">Create</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- ILOs Container -->
+        <div class="form-group" style="margin-top: 25px;">
+            <label for="ilo-content">Intended Learning Outcomes (ILOs)</label>
+            <textarea id="ilo-content" rows="6" placeholder="Generated ILOs will appear here..."></textarea>
+            <small style="color:#666; display:block; margin-top:5px;">Click "Add" in the chatbot to append items here.</small>
+        </div>
+
+    </form>
+</div>
+
+<!-- Floating Action Button -->
+<div class="fab-chat" id="fabChat" title="Open AI Assistant">
+    <i class="fa-solid fa-robot"></i>
+</div>
+
+<!-- Chatbot Window -->
+<div class="chat-window" id="chatWindow">
+    <div class="chat-header">
+        <span><i class="fa-solid fa-wand-magic-sparkles"></i> AI Course Assistant</span>
+        <span class="chat-close" id="chatClose"><i class="fa-solid fa-times"></i></span>
+    </div>
     
-    <div class="status-bar" id="status-bar">
-        <span>Topic: <strong id="s-topic">-</strong></span>
-        <span>Desc: <strong id="s-desc">-</strong></span>
-        <span>Subject: <strong id="s-subject">-</strong></span>
-        <span>Grade: <strong id="s-grade">-</strong></span>
-        <span>Level: <strong id="s-level">-</strong></span>
-        <span>Verb: <strong id="s-verb">-</strong></span>
+    <!-- Sticky Welcome Section -->
+    <div class="chat-sticky-section">
+        <div>
+            Hello! I'm your course design assistant. You can ask me questions about Learning Design, or use the buttons below.
+        </div>
+        <div class="chat-actions-menu">
+            <button class="action-chip" onclick="handleSuggestDP()">
+                <i class="fa-solid fa-lightbulb"></i> Suggest DP
+            </button>
+            <button class="action-chip" onclick="handleSuggestPA()">
+                <i class="fa-solid fa-chalkboard-user"></i> Suggest PA
+            </button>
+            <button class="action-chip" onclick="handleGenerateILOs()">
+                <i class="fa-solid fa-list-check"></i> Generate ILOs
+            </button>
+        </div>
     </div>
 
-    <div class="chat-messages" id="chat-messages"></div>
-
-    <div class="options-container" id="options-container">
-        <div style="font-size:0.9em;color:#777;margin-bottom:8px;">請選擇：</div>
-        <div class="options-grid" id="options-grid"></div>
+    <!-- Scrollable Chat Body -->
+    <div class="chat-body" id="chatBody">
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
     </div>
 
-    <div class="input-area" id="input-area">
-        <input type="text" id="user-input" placeholder="Type here..." onkeypress="handleEnter(event)">
-        <button class="send-btn" onclick="handleUserText()">Send</button>
+    <div class="chat-footer">
+        <input type="text" id="chatInput" placeholder="Ask me anything...">
+        <button id="chatSend"><i class="fa-solid fa-paper-plane"></i></button>
     </div>
 </div>
 
 <script>
-    let currentStep = 1; 
-    let formData = {
-        topic: "",
-        description: "",
-        subject: "",
-        grade: "",
-        bt_level: "",
-        verb: ""
-    };
+    // --- Configuration ---
+    const API_BASE_URL = "http://localhost:5000"; 
 
-    window.onload = function() {
-        appendBotMessage("你好！我是你的教案設計助手。");
-        setTimeout(() => appendBotMessage("Step 1: 請輸入**課程名稱 (Topic)** (例如: The Water Cycle)"), 500);
-    };
+    // --- DOM Elements ---
+    const fabChat = document.getElementById('fabChat');
+    const chatWindow = document.getElementById('chatWindow');
+    const chatClose = document.getElementById('chatClose');
+    const chatBody = document.getElementById('chatBody');
+    const chatInput = document.getElementById('chatInput');
+    const chatSend = document.getElementById('chatSend');
+    const typingIndicator = document.getElementById('typingIndicator');
 
-    function handleUserText() {
-        const input = document.getElementById('user-input');
-        const text = input.value.trim();
-        if (!text) return;
+    // Form Elements
+    const topicInput = document.getElementById('topic');
+    const descInput = document.getElementById('description');
+    const gradeInput = document.getElementById('grade-level');
+    const dpSelect = document.getElementById('disciplinary-practice');
+    const paSelect = document.getElementById('pedagogical-approach');
+    const bloomSelect = document.getElementById('bloom-level');
+    const iloTextarea = document.getElementById('ilo-content');
 
-        appendUserMessage(text);
-        input.value = "";
+    // --- Event Listeners ---
+    fabChat.addEventListener('click', () => {
+        chatWindow.classList.add('active');
+        fabChat.classList.add('hidden');
+    });
 
-        if (currentStep === 1) {
-            formData.topic = text;
-            updateStatus();
-            currentStep = 2;
-            appendBotMessage("Step 2: 請輸入**課程描述 (Description)**，描述教學內容或活動。");
-        } 
-        else if (currentStep === 2) {
-            formData.description = text;
-            updateStatus();
-            currentStep = 3;
-            appendBotMessage("Step 3: 請選擇**科目 (Subject)**。");
-            fetchAndShowOptions('get_subjects', 'subject');
-        }
-    }
+    chatClose.addEventListener('click', () => {
+        chatWindow.classList.remove('active');
+        setTimeout(() => fabChat.classList.remove('hidden'), 300);
+    });
 
-    function handleOptionClick(value, field) {
-        appendUserMessage(value);
-        formData[field] = value;
-        updateStatus();
-        hideOptions();
+    bloomSelect.addEventListener('change', function() {
+        const level = this.value;
+        this.setAttribute('data-level', level);
+    });
 
-        if (currentStep === 3) {
-            currentStep = 4;
-            appendBotMessage("Step 4: 請選擇**年級 (Grade)**。");
-            fetchAndShowOptions('get_grade_levels', 'grade');
-        } 
-        else if (currentStep === 4) {
-            currentStep = 5;
-            appendBotMessage("Step 5: 請選擇 **Bloom's Level** (認知層次)。");
-            fetchAndShowOptions('ILO_get_bt_levels', 'bt_level');
-        }
-        else if (currentStep === 5) {
-            currentStep = 6;
-            appendBotMessage("Step 6: 請選擇一個**動詞 (Verb)**。");
-            fetchAndShowOptions('ILO_get_bt_verbs', 'verb');
-        }
-        else if (currentStep === 6) {
-            currentStep = 7;
-            document.getElementById('input-area').style.display = 'none';
-            appendBotMessage("資訊收集完畢，正在生成 ILOs...");
-            callGenerateAPI();
-        }
-    }
+    chatSend.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMessage(); });
 
-    // --- [新增] 回到 Step 5 的功能 ---
-    function retryStep5() {
-        // 1. 清空舊的選擇
-        formData.bt_level = "";
-        formData.verb = "";
-        updateStatus();
-
-        // 2. 重設步驟
-        currentStep = 5;
-
-        // 3. 恢復輸入區 (雖然是用按鈕，但保持一致性)
-        document.getElementById('input-area').style.display = 'flex';
+    // --- Send Message ---
+    async function sendMessage() {
+        const text = chatInput.value.trim();
+        if(!text) return;
         
-        // 4. 顯示引導訊息
-        appendBotMessage("沒問題！讓我們針對同一個課題 (<strong>" + formData.topic + "</strong>) 重新設定目標。");
-        appendBotMessage("Step 5: 請再次選擇 **Bloom's Level** (認知層次)。");
-        
-        // 5. 重新載入選項
-        fetchAndShowOptions('ILO_get_bt_levels', 'bt_level');
+        appendMessage('user', text);
+        chatInput.value = '';
+        showTyping(true);
+
+        const contextData = {
+            message: text,
+            topic: topicInput.value,
+            description: descInput.value,
+            grade: gradeInput.value,
+            dp: dpSelect.value,
+            pa: paSelect.value
+        };
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(contextData)
+            });
+
+            if (!response.ok) throw new Error("API Error");
+            const data = await response.json();
+
+            showTyping(false);
+            appendMessage('bot', data.reply);
+
+        } catch (e) {
+            showTyping(false);
+            console.error(e);
+            appendMessage('bot', "Sorry, I'm having trouble connecting to the server right now.");
+        }
     }
 
-    function callGenerateAPI() {
-        const loadingId = 'loading-' + Date.now();
-        const chatBox = document.getElementById('chat-messages');
-        chatBox.innerHTML += `<div class="message bot-msg loading-dots" id="${loadingId}">AI 正在思考中...</div>`;
-        chatBox.scrollTop = chatBox.scrollHeight;
+    // --- Core AI Action Functions ---
 
-        fetch('/generate_ilos', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData)
-        })
-        .then(res => res.json())
-        .then(data => {
-            document.getElementById(loadingId).remove();
-            
-            if (data.error) {
-                appendBotMessage("錯誤: " + data.error);
-                return;
-            }
+    // ACTION 1: Suggest DP
+    async function handleSuggestDP() {
+        const topic = topicInput.value;
+        const description = descInput.value;
 
-            let html = `為您生成關於 <b>${formData.topic}</b> 的學習目標：<br>`;
-            if (Array.isArray(data)) {
-                data.forEach((item, index) => {
-                    const safeStatement = item.statement.replace(new RegExp('^' + item.verb, "i"), "").trim();
-                    html += `
-                    <div class="ilo-card">
-                        <strong>${index + 1}.</strong> 
-                        <span class="tag tag-cat">${item.category}</span>
-                        <span class="tag tag-bloom">${item.bt_level}</span>
-                        <br>
-                        Students will be able to <b>${item.verb}</b> ${safeStatement}
-                    </div>`;
-                });
-            } else {
-                html += JSON.stringify(data);
-            }
-            appendBotMessage(html);
+        if (!topic) {
+            appendMessage('bot', "Please enter a <b>Topic</b> in the form first.");
+            return;
+        }
+        appendMessage('user', "Suggest a Disciplinary Practice.");
+        showTyping(true);
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/suggest_dp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ topic: topic, description: description })
+            });
+
+            if (!response.ok) throw new Error("API Error");
+            const apiResult = await response.json();
             
-            // [修改] 顯示兩個按鈕：再造一個 或 全部重來
-            const actionBtns = `
-                <div class="action-btn-group">
-                    <button class="action-btn btn-retry" onclick="retryStep5()">🔄 再造一個 (同一課題)</button>
-                    <button class="action-btn btn-restart" onclick="location.reload()">🏠 全部重新開始</button>
+            let suggestion = apiResult.recommended_dp || apiResult.disciplinary_practice || "General Inquiry";
+            const data = { recommended_dp: suggestion, reason: apiResult.reason || "Based on your topic." };
+
+            showTyping(false);
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'chat-msg bot';
+            msgDiv.innerHTML = `
+                I recommend: <b>${data.recommended_dp}</b>.<br>
+                <small style="color:#666;">${data.reason}</small>
+                <div class="bot-suggestion-card">
+                    <button class="apply-btn" onclick="applyDP('${data.recommended_dp}', this)">
+                        <i class="fa-solid fa-check"></i> Apply to Form
+                    </button>
                 </div>
             `;
-            document.getElementById('chat-messages').innerHTML += `<div class="message bot-msg" style="background:none; padding-left:0;">${actionBtns}</div>`;
-            document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
-        })
-        .catch(err => {
-            document.getElementById(loadingId).remove();
-            appendBotMessage("連線錯誤: " + err);
-        });
+            chatBody.insertBefore(msgDiv, typingIndicator);
+            scrollToBottom();
+        } catch (e) { 
+            showTyping(false); 
+            appendMessage('bot', "Sorry, I couldn't connect to the AI server.");
+        }
     }
 
-    function fetchAndShowOptions(apiKey, fieldName) {
-        document.getElementById('user-input').disabled = true;
-        document.getElementById('user-input').placeholder = "請從下方選擇...";
+    window.applyDP = function(value, btnElement) {
+        dpSelect.value = value;
+        dpSelect.style.backgroundColor = "#e8f5e9";
+        setTimeout(() => dpSelect.style.backgroundColor = "white", 1000);
+        btnElement.textContent = "Applied!";
+        btnElement.disabled = true;
+        btnElement.style.backgroundColor = "#4caf50";
+    };
 
-        fetch('/proxy/' + apiKey)
-            .then(res => res.json())
-            .then(data => {
-                const container = document.getElementById('options-container');
-                const grid = document.getElementById('options-grid');
-                grid.innerHTML = '';
-                
-                if (Array.isArray(data)) {
-                    // 如果動詞太多，限制顯示數量
-                    const limit = (fieldName === 'verb') ? 40 : data.length;
-                    data.slice(0, limit).forEach(item => {
-                        const btn = document.createElement('button');
-                        btn.className = 'option-btn';
-                        btn.innerText = item.name;
-                        btn.onclick = () => handleOptionClick(item.name, fieldName);
-                        grid.appendChild(btn);
-                    });
-                }
-                container.style.display = 'block';
-                document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
-            })
-            .catch(err => appendBotMessage("無法載入選項: " + err));
+    // ACTION 2: Suggest PA
+    async function handleSuggestPA() {
+        const topic = topicInput.value;
+        if (!topic) {
+            appendMessage('bot', "Please enter a <b>Topic</b> in the form first.");
+            return;
+        }
+        appendMessage('user', "Suggest a Pedagogical Approach.");
+        showTyping(true);
+
+        setTimeout(() => {
+            showTyping(false);
+            const suggestion = "Self-Directed Learning";
+            const description = `
+                <strong>Self-Directed Learning (SDL)</strong> encourages learning around real-world problems. It uses a five-step structure:
+                <ul style="margin:5px 0 5px 20px; padding:0; font-size:0.85rem; color:#555;">
+                    <li>1. Goal-setting</li>
+                    <li>2. Self-planning</li>
+                    <li>3. Self-monitoring</li>
+                    <li>4. Self-evaluation</li>
+                    <li>5. Revision</li>
+                </ul>
+            `;
+            
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'chat-msg bot';
+            msgDiv.innerHTML = `
+                I recommend: <b>${suggestion}</b>.<br>
+                <div style="margin-top:5px; font-size:0.9rem;">${description}</div>
+                <div class="bot-suggestion-card">
+                    <button class="apply-btn" onclick="applyPA('${suggestion}', this)">
+                        <i class="fa-solid fa-check"></i> Apply to Form
+                    </button>
+                </div>
+            `;
+            chatBody.insertBefore(msgDiv, typingIndicator);
+            scrollToBottom();
+        }, 1200);
     }
 
-    function hideOptions() {
-        document.getElementById('options-container').style.display = 'none';
-        document.getElementById('user-input').disabled = false;
-        document.getElementById('user-input').placeholder = "Type here...";
-        document.getElementById('user-input').focus();
+    window.applyPA = function(value, btnElement) {
+        paSelect.value = value;
+        paSelect.style.backgroundColor = "#e8f5e9";
+        setTimeout(() => paSelect.style.backgroundColor = "white", 1000);
+        btnElement.textContent = "Applied!";
+        btnElement.disabled = true;
+        btnElement.style.backgroundColor = "#4caf50";
+    };
+
+    // ACTION 3: Generate ILOs
+    async function handleGenerateILOs() {
+        const topic = topicInput.value;
+        const bloom = bloomSelect.value;
+        const dp = dpSelect.value;
+        const pa = paSelect.value;
+
+        if (!topic || !bloom) {
+            appendMessage('bot', "Please ensure <b>Topic</b> and <b>Cognitive Level</b> are selected.");
+            return;
+        }
+
+        appendMessage('user', "Generate ILOs.");
+        showTyping(true);
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/generate_ilos`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    topic: topicInput.value, 
+                    description: descInput.value,
+                    grade: gradeInput.value, 
+                    bloom_level: bloom, 
+                    disciplinary_practice: dp,
+                    pedagogical_approach: pa
+                })
+            });
+
+            let data;
+            if (!response.ok) {
+                await new Promise(r => setTimeout(r, 1500));
+                data = [
+                    { statement: `Define the core concepts of ${topic}` },
+                    { statement: `Explain the importance of ${topic} in daily life` },
+                    { statement: `List the key components related to ${topic}` }
+                ];
+            } else {
+                data = await response.json();
+            }
+
+            showTyping(false);
+
+            let iloHtml = `<div style="margin-bottom:8px;">Here are 3 generated ILOs for <strong>${bloom}</strong>:</div>`;
+
+            data.forEach((item, index) => {
+                const safeText = encodeURIComponent(item.statement);
+                iloHtml += `
+                <div class="ilo-result-item">
+                    <div class="ilo-text"><strong>${index+1}.</strong> ${item.statement}</div>
+                    <button class="apply-btn small" onclick="applySingleILO('${safeText}', this)">
+                        <i class="fa-solid fa-plus"></i> Add to Form
+                    </button>
+                </div>`;
+            });
+
+            appendMessage('bot', iloHtml);
+
+        } catch (e) {
+            showTyping(false);
+            appendMessage('bot', "Error generating ILOs.");
+        }
     }
 
-    function appendBotMessage(html) {
+    window.applySingleILO = function(encodedText, btnElement) {
+        const text = decodeURIComponent(encodedText);
+        const currentVal = iloTextarea.value;
+        const newEntry = "• " + text;
+        
+        iloTextarea.value = currentVal ? currentVal + "\n" + newEntry : newEntry;
+        iloTextarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        iloTextarea.style.borderColor = "#4caf50";
+        setTimeout(() => iloTextarea.style.borderColor = "#ddd", 1000);
+
+        btnElement.innerHTML = '<i class="fa-solid fa-check"></i> Added';
+        btnElement.disabled = true;
+        btnElement.style.backgroundColor = "#4caf50";
+    };
+
+    function appendMessage(sender, htmlContent) {
         const div = document.createElement('div');
-        div.className = 'message bot-msg';
-        div.innerHTML = html;
-        document.getElementById('chat-messages').appendChild(div);
-        document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
+        div.className = `chat-msg ${sender}`;
+        div.innerHTML = htmlContent;
+        chatBody.insertBefore(div, typingIndicator);
+        scrollToBottom();
     }
 
-    function appendUserMessage(text) {
-        const div = document.createElement('div');
-        div.className = 'message user-msg';
-        div.innerText = text;
-        document.getElementById('chat-messages').appendChild(div);
-        document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
+    function showTyping(show) {
+        typingIndicator.style.display = show ? 'inline-flex' : 'none';
+        scrollToBottom();
     }
 
-    function updateStatus() {
-        document.getElementById('s-topic').innerText = formData.topic || '-';
-        document.getElementById('s-desc').innerText = formData.description ? 'OK' : '-';
-        document.getElementById('s-subject').innerText = formData.subject || '-';
-        document.getElementById('s-grade').innerText = formData.grade || '-';
-        document.getElementById('s-level').innerText = formData.bt_level || '-';
-        document.getElementById('s-verb').innerText = formData.verb || '-';
+    function scrollToBottom() {
+        chatBody.scrollTop = chatBody.scrollHeight;
     }
-
-    function handleEnter(e) { if (e.key === 'Enter') handleUserText(); }
 </script>
 
 </body>
