@@ -1,56 +1,56 @@
 # LDS Chatbot
 
-Learning Design Studio Chatbot - 一個用於學習設計和課程規劃的聊天機器人。
+Learning Design Studio Chatbot - An AI-powered chatbot for learning design and curriculum planning.
 
-## 環境要求
+## Requirements
 
 - Python 3.8+
 - Node.js 16+
-- npm 或 yarn
+- npm or yarn
 
-## 本地部署步驟
+## Local Deployment Steps
 
-### 1. 克隆或下載項目
+### 1. Clone or Download the Project
 
 ```bash
 cd LDS-Chatbot
 ```
 
-### 2. 安裝 Python 依賴
+### 2. Install Python Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-**注意：** 如果遇到 `PyPDF2` 或 `python-docx` 安裝問題，可以跳過（這些是可選的，用於文件解析）。
+**Note:** If you encounter installation issues with `PyPDF2` or `python-docx`, you can skip them (these are optional, used for file parsing).
 
-### 3. 安裝前端依賴
+### 3. Install Frontend Dependencies
 
 ```bash
 npm install
 ```
 
-### 4. 設置環境變數
+### 4. Set Environment Variables
 
-**必須設置的環境變數：**
+**Required Environment Variables:**
 
-- `AZURE_OPENAI_API_KEY` - Azure OpenAI API Key（必需）
+- `AZURE_OPENAI_API_KEY` - Azure OpenAI API Key (required)
 
-**可選的環境變數：**
+**Optional Environment Variables:**
 
-- `ENDPOINT_URL` - Azure OpenAI Endpoint URL（默認：`https://cite-icdevai04-openai-andy-usnc.openai.azure.com/`）
-- `AZURE_OPENAI_DEPLOYMENT` - 部署名稱（默認：`gpt-4.1`）
-- `AZURE_OPENAI_API_VERSION` - API 版本（默認：`2025-01-01-preview`）
-- `LDS_TOKEN` - LDS API Token（用於獲取科目、年級等選項）
-- `LDS_BASE` - LDS API 基礎 URL（默認：`https://lds.cite.hku.hk/api`）
-- `PORT` - Flask 後端端口（默認：`5000`）
+- `ENDPOINT_URL` - Azure OpenAI Endpoint URL (default: `https://cite-icdevai04-openai-andy-usnc.openai.azure.com/`)
+- `AZURE_OPENAI_DEPLOYMENT` - Deployment name (default: `gpt-4.1`)
+- `AZURE_OPENAI_API_VERSION` - API version (default: `2025-01-01-preview`)
+- `LDS_TOKEN` - LDS API Token (for fetching subjects, grade levels, etc.)
+- `LDS_BASE` - LDS API Base URL (default: `https://lds.cite.hku.hk/api`)
+- `PORT` - Flask backend port (default: `5000`)
 
 **Windows (PowerShell):**
 ```powershell
 $env:AZURE_OPENAI_API_KEY="your-azure-openai-api-key"
-$env:LDS_TOKEN="your-lds-token"  # 可選
-$env:ENDPOINT_URL="https://cite-icdevai04-openai-andy-usnc.openai.azure.com/"  # 可選
-$env:AZURE_OPENAI_DEPLOYMENT="gpt-4.1"  # 可選
+$env:LDS_TOKEN="your-lds-token"  # Optional
+$env:ENDPOINT_URL="https://cite-icdevai04-openai-andy-usnc.openai.azure.com/"  # Optional
+$env:AZURE_OPENAI_DEPLOYMENT="gpt-4.1"  # Optional
 ```
 
 **Windows (CMD):**
@@ -69,7 +69,7 @@ export ENDPOINT_URL="https://cite-icdevai04-openai-andy-usnc.openai.azure.com/"
 export AZURE_OPENAI_DEPLOYMENT="gpt-4.1"
 ```
 
-**或者創建 `.env` 文件（如果使用 python-dotenv）：**
+**Or create a `.env` file (if using python-dotenv):**
 ```env
 AZURE_OPENAI_API_KEY=your-azure-openai-api-key
 LDS_TOKEN=your-lds-token
@@ -80,13 +80,13 @@ LDS_BASE=https://lds.cite.hku.hk/api
 PORT=5000
 ```
 
-## 運行應用
+## Running the Application
 
-### 方法 1: 分別啟動（推薦用於開發）
+### Method 1: Start Separately (Recommended for Development)
 
-**步驟 1 - 啟動 Flask 後端:**
+**Step 1 - Start Flask Backend:**
 
-打開第一個終端窗口，設置環境變數並啟動後端：
+Open the first terminal window, set environment variables and start the backend:
 
 **Windows (PowerShell):**
 ```powershell
@@ -106,128 +106,128 @@ export AZURE_OPENAI_API_KEY="your-api-key"
 python app.py
 ```
 
-後端將運行在 `http://localhost:5000`
+The backend will run on `http://localhost:5000`
 
-**步驟 2 - 啟動 Vite 前端:**
+**Step 2 - Start Vite Frontend:**
 
-打開第二個終端窗口：
+Open a second terminal window:
 ```bash
 npm run dev
 ```
 
-前端將運行在 `http://localhost:5173`
+The frontend will run on `http://localhost:5173`
 
-### 方法 2: 使用啟動腳本（Windows）
+### Method 2: Using Startup Script (Windows)
 
-創建 `start.ps1` 文件：
+Create a `start.ps1` file:
 ```powershell
-# 設置環境變數
+# Set environment variables
 $env:AZURE_OPENAI_API_KEY="your-azure-openai-api-key"
-$env:LDS_TOKEN="your-lds-token"  # 可選
+$env:LDS_TOKEN="your-lds-token"  # Optional
 
-# 啟動後端（在新窗口）
+# Start backend (in new window)
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PWD'; `$env:AZURE_OPENAI_API_KEY='your-azure-openai-api-key'; python app.py"
 
-# 等待後端啟動
+# Wait for backend to start
 Start-Sleep -Seconds 3
 
-# 啟動前端
+# Start frontend
 npm run dev
 ```
 
-然後運行：
+Then run:
 ```powershell
 .\start.ps1
 ```
 
-### 方法 3: 使用啟動腳本（Linux/Mac）
+### Method 3: Using Startup Script (Linux/Mac)
 
-創建 `start.sh` 文件：
+Create a `start.sh` file:
 ```bash
 #!/bin/bash
 
-# 設置環境變數
+# Set environment variables
 export AZURE_OPENAI_API_KEY="your-azure-openai-api-key"
-export LDS_TOKEN="your-lds-token"  # 可選
+export LDS_TOKEN="your-lds-token"  # Optional
 
-# 啟動後端（在背景）
+# Start backend (in background)
 python app.py &
 BACKEND_PID=$!
 
-# 等待後端啟動
+# Wait for backend to start
 sleep 3
 
-# 啟動前端
+# Start frontend
 npm run dev
 
-# 當前端停止時，也停止後端
+# Stop backend when frontend stops
 trap "kill $BACKEND_PID" EXIT
 ```
 
-然後運行：
+Then run:
 ```bash
 chmod +x start.sh
 ./start.sh
 ```
 
-## 訪問應用
+## Accessing the Application
 
-### 本地訪問
-打開瀏覽器訪問：`http://localhost:5173`
+### Local Access
+Open your browser and visit: `http://localhost:5173`
 
-### 通過 IP 地址訪問（分享給同網絡用戶）
+### Access via IP Address (Share with Users on Same Network)
 
-1. **獲取你的 IP 地址：**
+1. **Get your IP address:**
    
    **Windows:**
    ```powershell
    ipconfig
    ```
-   查找 "IPv4 Address"，例如：`10.64.141.53`
+   Look for "IPv4 Address", e.g., `10.64.141.53`
    
    **Linux/Mac:**
    ```bash
    ifconfig
-   # 或
+   # or
    ip addr show
    ```
 
-2. **啟動應用後，其他人可以通過以下地址訪問：**
+2. **After starting the application, others can access it via:**
    ```
-   http://<你的IP地址>:5173
+   http://<your-ip-address>:5173
    ```
-   例如：`http://10.64.141.53:5173`
+   Example: `http://10.64.141.53:5173`
 
-3. **注意事項：**
-   - 確保你的防火牆允許端口 5173 和 5000 的連接
-   - 確保所有設備都在同一網絡中
-   - 後端和前端都需要在啟動時顯示網絡訪問地址
+3. **Notes:**
+   - Ensure your firewall allows connections on ports 5173 and 5000
+   - Ensure all devices are on the same network
+   - Both backend and frontend need to display network access addresses when starting
 
-## 故障排除
+## Troubleshooting
 
-### 後端無法啟動
+### Backend Cannot Start
 
-1. **檢查 Python 版本：**
+1. **Check Python version:**
    ```bash
-   python --version  # 應該是 3.8 或更高
+   python --version  # Should be 3.8 or higher
    ```
 
-2. **檢查依賴是否安裝：**
+2. **Check if dependencies are installed:**
    ```bash
    pip list
    ```
-   確保以下包已安裝：
+   Ensure the following packages are installed:
    - Flask
    - flask-cors
    - requests
    - openai
 
-3. **檢查環境變數是否設置：**
+3. **Check if environment variables are set:**
    ```bash
    python -c "import os; print('AZURE_OPENAI_API_KEY:', bool(os.getenv('AZURE_OPENAI_API_KEY')))"
    ```
 
-4. **檢查端口是否被佔用：**
+4. **Check if port is in use:**
    ```bash
    # Windows
    netstat -ano | findstr :5000
@@ -236,68 +236,83 @@ chmod +x start.sh
    lsof -i :5000
    ```
 
-### 前端無法連接後端
+### Frontend Cannot Connect to Backend
 
-1. **確認後端正在運行：**
-   - 檢查終端是否有 `Running on http://0.0.0.0:5000` 訊息
-   - 訪問 `http://localhost:5000/api/health` 確認後端響應
+1. **Confirm backend is running:**
+   - Check terminal for `Running on http://0.0.0.0:5000` message
+   - Visit `http://localhost:5000/api/health` to confirm backend response
 
-2. **檢查 Vite 代理配置：**
-   - 確認 `vite.config.js` 中的 proxy 設置為 `http://localhost:5000`
+2. **Check Vite proxy configuration:**
+   - Confirm proxy in `vite.config.js` is set to `http://localhost:5000`
 
-3. **檢查瀏覽器控制台：**
-   - 打開瀏覽器開發者工具（F12）
-   - 查看 Console 和 Network 標籤的錯誤訊息
+3. **Check browser console:**
+   - Open browser developer tools (F12)
+   - Check Console and Network tabs for error messages
 
-### Azure OpenAI 認證失敗
+### Azure OpenAI Authentication Failed
 
-1. **檢查 API Key：**
+1. **Check API Key:**
    ```bash
    python -c "import os; print('API Key set:', bool(os.getenv('AZURE_OPENAI_API_KEY')))"
    ```
 
-2. **檢查 Endpoint URL：**
-   - 確認 `ENDPOINT_URL` 環境變數設置正確
-   - 確認 endpoint URL 以 `/` 結尾
+2. **Check Endpoint URL:**
+   - Confirm `ENDPOINT_URL` environment variable is set correctly
+   - Confirm endpoint URL ends with `/`
 
-3. **查看後端日誌：**
-   - 檢查終端中的錯誤訊息
-   - 確認 Azure OpenAI client 是否成功初始化
+3. **Check backend logs:**
+   - Check error messages in terminal
+   - Confirm Azure OpenAI client initialized successfully
 
-### LDS API 認證失敗 (401)
+### LDS API Authentication Failed (401)
 
-1. **檢查 LDS_TOKEN：**
-   - 確認 `LDS_TOKEN` 是否正確設置
-   - 確認 token 是否有效且未過期
+1. **Check LDS_TOKEN:**
+   - Confirm `LDS_TOKEN` is set correctly
+   - Confirm token is valid and not expired
 
-2. **查看後端日誌：**
-   - 檢查終端中的錯誤訊息
-   - 確認 LDS API 請求是否成功
+2. **Check backend logs:**
+   - Check error messages in terminal
+   - Confirm LDS API requests are successful
 
-### 文件上傳功能無法使用
+### File Upload Feature Not Working
 
-1. **檢查文件解析庫：**
+1. **Check file parsing libraries:**
    ```bash
    pip install PyPDF2 python-docx
    ```
-   這些庫是可選的，如果未安裝，PDF/DOCX 解析功能將不可用
+   These libraries are optional; if not installed, PDF/DOCX parsing features will be unavailable
 
-2. **檢查文件大小：**
-   - 確認上傳的文件不超過服務器限制
-   - 檢查後端日誌中的錯誤訊息
+2. **Check file size:**
+   - Confirm uploaded files don't exceed server limits
+   - Check error messages in backend logs
 
-## 項目結構
+## Project Structure
 
 ```
 LDS-Chatbot/
-├── app.py              # Flask 後端主文件
-├── requirements.txt    # Python 依賴
-├── package.json       # Node.js 依賴
-├── vite.config.js     # Vite 配置
+├── app.py              # Flask backend main file
+├── requirements.txt    # Python dependencies
+├── package.json       # Node.js dependencies
+├── vite.config.js     # Vite configuration
 ├── src/
-│   ├── App.jsx        # React 主組件
-│   ├── main.jsx       # React 入口
-│   └── styles.css     # 樣式文件
-└── index.html         # HTML 模板
+│   ├── App.jsx        # React main component
+│   ├── main.jsx       # React entry point
+│   └── styles.css     # Stylesheet
+└── index.html         # HTML template
 ```
 
+## Features
+
+- **Intelligent Chatbot Interface**: Socratic guidance methodology that asks questions to guide users through learning design
+- **ILO Generation Tool**: Structured workflow for creating Intended Learning Outcomes with category selection, Bloom's Taxonomy levels, and verb selection
+- **Document Analysis**: Upload teaching documents (PDF, DOCX, TXT) for AI-powered analysis and improvement suggestions
+- **Smart Suggestions**: AI-generated follow-up questions to help users continue conversations naturally
+- **Multi-language Support**: Traditional Chinese, English, and Simplified Chinese
+- **Context-aware Assistance**: Uses course information (topic, subject, grade level) for personalized guidance
+
+## Technology Stack
+
+- **Frontend**: React + Vite
+- **Backend**: Flask (Python)
+- **AI**: Azure OpenAI (GPT-4)
+- **Integration**: LDS API for educational data
