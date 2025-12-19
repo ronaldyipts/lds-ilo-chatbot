@@ -2,3 +2,7 @@ Flask
 flask-cors
 requests
 gunicorn
+PyPDF2
+python-docx
+python-magic-bin
+openai
